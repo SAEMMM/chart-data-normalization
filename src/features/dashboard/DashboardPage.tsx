@@ -1,18 +1,48 @@
-import { Box, Stack, Typography } from "@mui/material";
+import type { AppType, DashboardFilter, DateRange } from '../../types/dashboard';
+import { Box, Skeleton, Stack, Typography } from '@mui/material';
 
-import { ErrorTrendChart } from "./ErrorTrendChart";
-import { SummaryCards } from "./SummaryCards";
-import { fetchDashboardData } from "../../apis/dashboard";
-import { useQuery } from "@tanstack/react-query";
+import { DashboardFilters } from './DashboardFilters';
+import { ErrorTrendChart } from './ErrorTrendChart';
+import { SummaryCards } from './SummaryCards';
+import { fetchDashboardData } from '../../apis/dashboard';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+
+const initialFilters: DashboardFilter = {
+  appType: 'Web',
+  dateRange: 'Last 7 days',
+};
 
 export function DashboardPage() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["dashboard"],
-    queryFn: fetchDashboardData,
+  const [filters, setFilters] = useState<DashboardFilter>(initialFilters);
+
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ['dashboard', filters.appType, filters.dateRange],
+    queryFn: () => fetchDashboardData(filters),
   });
 
+  const handleChangeAppType = (value: AppType) => {
+    setFilters((prev) => ({
+      ...prev,
+      appType: value,
+    }));
+  };
+
+  const handleChangeDateRange = (value: DateRange) => {
+    setFilters((prev) => ({
+      ...prev,
+      dateRange: value,
+    }));
+  };
+
   if (isLoading) {
-    return <Box p={4}>Loading dashboard...</Box>;
+    return (
+      <Stack spacing={3}>
+        <Skeleton variant="rounded" height={40} width={360} />
+        <Skeleton variant="rounded" height={140} />
+        <Skeleton variant="rounded" height={320} />
+      </Stack>
+    );
   }
 
   if (isError || !data) {
@@ -23,16 +53,35 @@ export function DashboardPage() {
     <Stack spacing={4}>
       <Box>
         <Typography variant="h5" fontWeight={700} mb={2}>
+          Filters
+        </Typography>
+        <DashboardFilters
+          filters={filters}
+          onChangeAppType={handleChangeAppType}
+          onChangeDateRange={handleChangeDateRange}
+        />
+      </Box>
+
+      <Box>
+        <Typography variant="h5" fontWeight={700} mb={2}>
           Summary
         </Typography>
-        <SummaryCards data={data.summary} />
+        {isFetching ? (
+          <Skeleton variant="rounded" height={140} />
+        ) : (
+          <SummaryCards data={data.summary} />
+        )}
       </Box>
 
       <Box>
         <Typography variant="h5" fontWeight={700} mb={2}>
           Error & Response Trend
         </Typography>
-        <ErrorTrendChart data={data.trend} />
+        {isFetching ? (
+          <Skeleton variant="rounded" height={320} />
+        ) : (
+          <ErrorTrendChart data={data.trend} />
+        )}
       </Box>
     </Stack>
   );

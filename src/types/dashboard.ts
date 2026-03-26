@@ -1,5 +1,8 @@
 export type ServiceStatus = 'normal' | 'warning' | 'critical';
 
+export type AppType = 'Web' | 'Android' | 'iOS';
+export type DateRange = 'Last 24 hours' | 'Last 7 days' | 'Last 30 days';
+
 export interface SummaryMetric {
   label: string;
   value: string;
@@ -14,8 +17,8 @@ export interface TrendPoint {
 }
 
 export interface DashboardFilter {
-  appType: string;
-  dateRange: string;
+  appType: AppType;
+  dateRange: DateRange;
 }
 
 export interface DashboardData {
